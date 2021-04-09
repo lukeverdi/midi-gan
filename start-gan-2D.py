@@ -170,7 +170,6 @@ def train(dataset, epochs):
 
         epoch_elapsed = time.time()-epoch_start
         print (f'Epoch {epoch+1}, gen loss={g_loss},disc loss={d_loss}, {hms_string(epoch_elapsed)}')
-        print (f'Epoch {epoch+1}, gen loss={g_loss},disc loss={d_loss}, {epoch_elapsed}')
         #save_images(epoch,fixed_seed)
 
     elapsed = time.time()-start

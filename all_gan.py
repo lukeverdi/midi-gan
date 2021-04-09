@@ -20,11 +20,12 @@ SEED_SIZE = 100
 # Configuration
 BATCH_SIZE = 32
 BUFFER_SIZE = 60000
-IMAGE_SHAPE = (256,3)  # make sure GAN matches this
+IMAGE_SHAPE = (256,3,1)  # make sure GAN matches this
 
 
 # training data read and convert to TF
 train_data_midi = np.load('midi-gan/All_Maestro_Parsed.npy')
+train_data_midi = train_data_midi.reshape((train_data_midi.shape[0],256,3,1))
 train_data_midi_tf = tf.data.Dataset.from_tensor_slices(training_data_midi) \
     .shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
@@ -40,38 +41,41 @@ def build_generator(seed_size, channels):
 
     model = Sequential()
 
-    model.add(Dense(4*256,activation="relu",input_dim=SEED_SIZE))
-    model.add(Reshape((4,256)))
+    model.add(Dense(4*1*256,activation="relu",input_dim=100))
+    model.add(Reshape((4,1,256)))
 
-    model.add(UpSampling1D()) #8
-    model.add(Conv1D(256,kernel_size=3,padding="same"))
+    model.add(UpSampling2D((2,3)))
+    model.add(Conv2D(256,kernel_size=5,padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
+    model.add(LeakyReLU(0.2))
 
-    model.add(UpSampling1D()) #16
-    model.add(Conv1D(256,kernel_size=3,padding="same"))
+    model.add(UpSampling2D((2,1)))
+    model.add(Conv2D(256,kernel_size=5,padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
+    model.add(LeakyReLU(0.2))
 
-    # Output resolution, additional upsampling
-    model.add(UpSampling1D()) #32
-    model.add(Conv1D(128,kernel_size=3,padding="same"))
+    model.add(UpSampling2D((2,1)))
+    model.add(Conv2D(128,kernel_size=5,padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
+    model.add(LeakyReLU(0.2))
 
-
-    model.add(UpSampling1D()) #64
-    model.add(Conv1D(64,kernel_size=3,padding="same"))
+    model.add(UpSampling2D((2,1)))
+    model.add(Conv2D(64,kernel_size=5,padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
+    model.add(LeakyReLU(0.2))
 
-    model.add(UpSampling1D(size=(3))) #
-    model.add(Conv1D(32,kernel_size=3,padding="same"))
+    model.add(UpSampling2D((2,1)))
+    model.add(Conv2D(32,kernel_size=5,padding="same"))
     model.add(BatchNormalization(momentum=0.8))
-    model.add(Activation("relu"))
+    model.add(LeakyReLU(0.2))
+
+    model.add(UpSampling2D((2,1)))
+    model.add(Conv2D(16,kernel_size=5,padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(0.2))
 
     # Final CNN layer
-    model.add(Conv1D(3,kernel_size=3,padding="same"))
+    model.add(Conv2D(1,kernel_size=3,padding="same"))
     model.add(Activation("sigmoid"))
 
     return model
@@ -80,27 +84,24 @@ def build_discriminator(image_shape):
 
     model = Sequential()
 
-    model.add(Conv1D(32, kernel_size=3, strides=2, input_shape=image_shape, padding="same"))
+    model.add(Conv2D(16, kernel_size=4, strides=1, input_shape=image_shape, padding="same"))
     model.add(LeakyReLU(alpha=0.2))
 
     model.add(Dropout(0.25))
-    model.add(Conv1D(64, kernel_size=3, strides=2, padding="same"))
-    model.add(ZeroPadding1D(padding=((0,1))))
+    model.add(Conv2D(32, kernel_size=4, strides=2, padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
+
+    model.add(Conv2D(64, kernel_size=4, strides=2, padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
+
+    model.add(Conv2D(128, kernel_size=4, strides=2, padding="same"))
     model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(alpha=0.2))
 
     model.add(Dropout(0.25))
-    model.add(Conv1D(128, kernel_size=3, strides=2, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=0.2))
-
-    model.add(Dropout(0.25))
-    model.add(Conv1D(256, kernel_size=3, strides=1, padding="same"))
-    model.add(BatchNormalization(momentum=0.8))
-    model.add(LeakyReLU(alpha=0.2))
-
-    model.add(Dropout(0.25))
-    model.add(Conv1D(512, kernel_size=3, strides=1, padding="same"))
+    model.add(Conv2D(256, kernel_size=4, strides=2, padding="same"))
     model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(alpha=0.2))
 
@@ -167,8 +168,7 @@ def train(dataset, epochs):
         d_loss = sum(disc_loss_list) / len(disc_loss_list)
 
         epoch_elapsed = time.time()-epoch_start
-        print (f'Epoch {epoch+1}, gen loss={g_loss},disc loss={d_loss},'\
-           ' {hms_string(epoch_elapsed)}')
+        print (f'Epoch {epoch+1}, gen loss={g_loss},disc loss={d_loss}, {hms_string(epoch_elapsed)}')
         #save_images(epoch,fixed_seed)
 
     elapsed = time.time()-start
