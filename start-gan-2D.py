@@ -194,4 +194,4 @@ discriminator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
 train(train_data_midi_tf, 50)
 
 # save the generator
-generator.save("start_2d_midi_generator.h5")
+generator.save("start_2d_midi_generator")
