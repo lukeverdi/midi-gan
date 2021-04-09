@@ -12,7 +12,7 @@ import time
 import matplotlib.pyplot as plt
 
 # Let's activate CUDA for GPU based operations
-device=torch.device('cuda')
+# device=torch.device('cuda')
 
 # Size vector to generate images from
 SEED_SIZE = 100
@@ -24,9 +24,9 @@ IMAGE_SHAPE = (256,3,1)  # make sure GAN matches this
 
 
 # training data read and convert to TF
-train_data_midi = np.load('midi-gan/All_Maestro_Parsed.npy')
+train_data_midi = np.load('All_Maestro_Parsed.npy')
 train_data_midi = train_data_midi.reshape((train_data_midi.shape[0],256,3,1))
-train_data_midi_tf = tf.data.Dataset.from_tensor_slices(training_data_midi) \
+train_data_midi_tf = tf.data.Dataset.from_tensor_slices(train_data_midi) \
     .shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
 # Nicely formatted time string
@@ -191,7 +191,7 @@ generator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
 discriminator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
 
 # train!
-train(train_data_midi_tf, 50)
+train(train_data_midi_tf, 10)
 
 # save the generator
 generator.save("all_midi_generator")
