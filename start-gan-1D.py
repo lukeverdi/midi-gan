@@ -12,20 +12,20 @@ import time
 import matplotlib.pyplot as plt
 
 # Let's activate CUDA for GPU based operations
-device=torch.device('cuda')
+# device=torch.device('cuda')
 
 # Size vector to generate images from
 SEED_SIZE = 100
 
 # Configuration
-BATCH_SIZE = 32
+BATCH_SIZE = 1
 BUFFER_SIZE = 60000
 IMAGE_SHAPE = (256,3)  # make sure GAN matches this
 
 
 # training data read and convert to TF
-train_data_midi = np.load('midi-gan/Start_Maestro_Parsed.npy')
-train_data_midi_tf = tf.data.Dataset.from_tensor_slices(training_data_midi) \
+train_data_midi = np.load('Start_Maestro_Parsed.npy')
+train_data_midi_tf = tf.data.Dataset.from_tensor_slices(train_data_midi) \
     .shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
 # Nicely formatted time string
@@ -181,11 +181,15 @@ def train(dataset, epochs):
 
 # build the generator
 generator = build_generator(SEED_SIZE, 1)
+for layer in generator.layers:
+    print(layer.output_shape)
 noise = tf.random.normal([1,SEED_SIZE])
 generated_image = generator(noise, training=False)
 
 # build the discriminator
 discriminator = build_discriminator(IMAGE_SHAPE)
+for layer in discriminator.layers:
+    print(layer.output_shape)
 decision = discriminator(generated_image)
 
 # This method returns a helper function to compute cross entropy loss

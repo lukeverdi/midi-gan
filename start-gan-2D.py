@@ -12,7 +12,7 @@ import time
 import matplotlib.pyplot as plt
 
 # Let's activate CUDA for GPU based operations
-device=torch.device('cuda')
+# device=torch.device('cuda')
 
 # Size vector to generate images from
 SEED_SIZE = 100
@@ -24,8 +24,10 @@ IMAGE_SHAPE = (256,3,1)  # make sure GAN matches this
 
 
 # training data read and convert to TF
-train_data_midi = np.load('midi-gan/Start_Maestro_Parsed.npy')
-train_data_midi_tf = tf.data.Dataset.from_tensor_slices(training_data_midi) \
+train_data_midi = np.load('Start_Maestro_Parsed.npy')
+train_data_midi = np.hstack([train_data_midi, np.zeros([train_data_midi.shape[0],56,3])])
+train_data_midi = train_data_midi.reshape((train_data_midi.shape[0],256,3,1))
+train_data_midi_tf = tf.data.Dataset.from_tensor_slices(train_data_midi) \
     .shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
 # Nicely formatted time string
@@ -40,7 +42,7 @@ def build_generator(seed_size, channels):
 
     model = Sequential()
 
-    model.add(Dense(4*1*256,activation="relu",input_dim=128))
+    model.add(Dense(4*1*256,activation="relu",input_dim=100))
     model.add(Reshape((4,1,256)))
 
     model.add(UpSampling2D((2,3)))
@@ -167,8 +169,8 @@ def train(dataset, epochs):
         d_loss = sum(disc_loss_list) / len(disc_loss_list)
 
         epoch_elapsed = time.time()-epoch_start
-        print (f'Epoch {epoch+1}, gen loss={g_loss},disc loss={d_loss},'\
-           ' {hms_string(epoch_elapsed)}')
+        print (f'Epoch {epoch+1}, gen loss={g_loss},disc loss={d_loss}, {hms_string(epoch_elapsed)}')
+        print (f'Epoch {epoch+1}, gen loss={g_loss},disc loss={d_loss}, {epoch_elapsed}')
         #save_images(epoch,fixed_seed)
 
     elapsed = time.time()-start
@@ -176,11 +178,15 @@ def train(dataset, epochs):
 
 # build the generator
 generator = build_generator(SEED_SIZE, 1)
+for layer in generator.layers:
+    print(layer.output_shape)
 noise = tf.random.normal([1,SEED_SIZE])
 generated_image = generator(noise, training=False)
 
 # build the discriminator
 discriminator = build_discriminator(IMAGE_SHAPE)
+for layer in discriminator.layers:
+    print(layer.output_shape)
 decision = discriminator(generated_image)
 
 # This method returns a helper function to compute cross entropy loss
@@ -191,7 +197,7 @@ generator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
 discriminator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
 
 # train!
-train(train_data_midi_tf, 50)
+train(train_data_midi_tf, 3)
 
 # save the generator
 generator.save("start_2d_midi_generator")
