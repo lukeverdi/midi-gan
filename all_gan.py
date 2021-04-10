@@ -11,9 +11,6 @@ import os
 import time
 import matplotlib.pyplot as plt
 
-# Let's activate CUDA for GPU based operations
-# device=torch.device('cuda')
-
 # Size vector to generate images from
 SEED_SIZE = 100
 

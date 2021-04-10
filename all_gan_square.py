@@ -11,9 +11,6 @@ import os
 import time
 import matplotlib.pyplot as plt
 
-# Let's activate CUDA for GPU based operations
-# device=torch.device('cuda')
-
 # Size vector to generate images from
 SEED_SIZE = 100
 
@@ -183,4 +180,4 @@ discriminator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
 train(train_data_midi_tf, 10)
 
 # save the generator
-generator.save("all_midi_generator")
+generator.save("all_midi_square_generator")

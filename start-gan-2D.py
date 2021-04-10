@@ -11,9 +11,6 @@ import os
 import time
 import matplotlib.pyplot as plt
 
-# Let's activate CUDA for GPU based operations
-# device=torch.device('cuda')
-
 # Size vector to generate images from
 SEED_SIZE = 100
 
@@ -97,7 +94,7 @@ def build_discriminator(image_shape):
       model.add(Dropout(0.25))
       model.add(Flatten())
       model.add(Dense(1, activation='sigmoid'))
-      
+
       return model
 
 def generator_loss(fake_output):
