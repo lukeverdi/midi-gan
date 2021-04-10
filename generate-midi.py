@@ -54,6 +54,7 @@ reconstructed_generator = tf.keras.models.load_model("start_2d_midi_generator")
 
 noise = tf.random.normal([1, SEED_SIZE])
 generated_notes = reconstructed_generator(noise, training=False).numpy().reshape((256,3))
+print(generated_notes)
 midi_df = pd.DataFrame(generated_notes,columns=["note", "duration",'time_since_last'])
 midi_remade = recreate_midi(midi_df)
 midi_remade.save('generated_midi.mid')

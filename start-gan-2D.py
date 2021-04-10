@@ -24,7 +24,7 @@ IMAGE_SHAPE = (32,24,1)  # make sure GAN matches this
 
 
 # training data read and convert to TF
-train_data_midi = np.load('All_Maestro_Parsed.npy')
+train_data_midi = np.load('All_Maestro_Parsed.npy')[:5000,:,:]
 train_data_midi = train_data_midi.reshape((train_data_midi.shape[0],32,24,1))
 train_data_midi_tf = tf.data.Dataset.from_tensor_slices(train_data_midi) \
     .shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
@@ -97,8 +97,8 @@ def build_discriminator(image_shape):
       model.add(Dropout(0.25))
       model.add(Flatten())
       model.add(Dense(1, activation='sigmoid'))
-
-    return model
+      
+      return model
 
 def generator_loss(fake_output):
     return cross_entropy(tf.ones_like(fake_output), fake_output)
