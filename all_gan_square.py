@@ -94,8 +94,8 @@ def build_discriminator(image_shape):
       model.add(Dropout(0.25))
       model.add(Flatten())
       model.add(Dense(1, activation='sigmoid'))
-
-    return model
+      
+      return model
 
 def generator_loss(fake_output):
     return cross_entropy(tf.ones_like(fake_output), fake_output)

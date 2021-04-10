@@ -50,7 +50,7 @@ def recreate_midi(df_first_notes, speed=20000):
 
 SEED_SIZE = 100
 
-reconstructed_generator = tf.keras.models.load_model("start_2d_midi_generator")
+reconstructed_generator = tf.keras.models.load_model("all_midi_square_generator")
 
 noise = tf.random.normal([1, SEED_SIZE])
 generated_notes = reconstructed_generator(noise, training=False).numpy().reshape((256,3))

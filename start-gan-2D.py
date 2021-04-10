@@ -63,7 +63,7 @@ def build_generator(seed_size, channels):
 
     # Final CNN layer
     model.add(Conv2D(1,kernel_size=4,padding="same"))
-    model.add(Activation("sigmoid"))
+    model.add(LeakyReLU(0.2))
 
     return model
 
