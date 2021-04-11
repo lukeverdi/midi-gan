@@ -22,6 +22,10 @@ IMAGE_SHAPE = (32,24,1)  # make sure GAN matches this
 
 # training data read and convert to TF
 train_data_midi = np.load('All_Maestro_Parsed.npy')
+train_data_midi[:,:,0] *= 2
+train_data_midi[:,:,0] -= 1
+train_data_midi[:,:,1] *= np.random.randint(0,2,256)*2-1
+train_data_midi[:,:,2] *= np.random.randint(0,2,256)*2-1
 train_data_midi = train_data_midi.reshape((train_data_midi.shape[0],32,24,1))
 train_data_midi_tf = tf.data.Dataset.from_tensor_slices(train_data_midi) \
     .shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
@@ -63,7 +67,7 @@ def build_generator(seed_size, channels):
 
     # Final CNN layer
     model.add(Conv2D(1,kernel_size=4,padding="same"))
-    model.add(Activation("sigmoid"))
+    model.add(Activation("tanh"))
 
     return model
 
@@ -180,4 +184,4 @@ discriminator_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
 train(train_data_midi_tf, 10)
 
 # save the generator
-generator.save("all_midi_square_generator")
+generator.save("all_midi_square_tanh_generator")
