@@ -17,16 +17,16 @@ SEED_SIZE = 100
 # Configuration
 BATCH_SIZE = 32
 BUFFER_SIZE = 60000
-IMAGE_SHAPE = (32,24,1)  # make sure GAN matches this
+IMAGE_SHAPE = (16,16,3)  # make sure GAN matches this
 
 
 # training data read and convert to TF
 train_data_midi = np.load('All_Maestro_Parsed.npy')
-train_data_midi[:,:,0] *= 2
-train_data_midi[:,:,0] -= 1
-train_data_midi[:,:,1] *= np.random.randint(0,2,256)*2-1
-train_data_midi[:,:,2] *= np.random.randint(0,2,256)*2-1
-train_data_midi = train_data_midi.reshape((train_data_midi.shape[0],32,24,1))
+# train_data_midi[:,:,0] *= 2
+# train_data_midi[:,:,0] -= 1
+# train_data_midi[:,:,1] *= np.random.randint(0,2,256)*2-1
+# train_data_midi[:,:,2] *= np.random.randint(0,2,256)*2-1
+train_data_midi = train_data_midi.reshape((train_data_midi.shape[0],16,16,3))
 train_data_midi_tf = tf.data.Dataset.from_tensor_slices(train_data_midi) \
     .shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
@@ -38,20 +38,20 @@ def hms_string(sec_elapsed):
     return "{}:{:>02}:{:>05.2f}".format(h, m, s)
 
 
-def build_generator(seed_size, channels):
+def build_generator(seed_size):
 
     model = Sequential()
 
-    model.add(Dense(2*3*256,activation="relu",input_dim=100))
-    model.add(Reshape((2,3,256)))
+    model.add(Dense(1*1*1024,activation="relu",input_dim=100))
+    model.add(Reshape((1,1,1024)))
 
-    model.add(UpSampling2D((2,1)))
-    model.add(Conv2D(256,kernel_size=4, padding="same"))
+    model.add(UpSampling2D())
+    model.add(Conv2D(512,kernel_size=4, padding="same"))
     model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(0.2))
 
     model.add(UpSampling2D())
-    model.add(Conv2D(128,kernel_size=4,padding="same"))
+    model.add(Conv2D(256,kernel_size=4, padding="same"))
     model.add(BatchNormalization(momentum=0.8))
     model.add(LeakyReLU(0.2))
 
@@ -66,40 +66,41 @@ def build_generator(seed_size, channels):
     model.add(LeakyReLU(0.2))
 
     # Final CNN layer
-    model.add(Conv2D(1,kernel_size=4,padding="same"))
-    model.add(Activation("tanh"))
+    model.add(Conv2D(3,kernel_size=4,padding="same"))
+    model.add(Activation("sigmoid"))
 
     return model
 
 def build_discriminator(image_shape):
 
-      model = Sequential()
+    model = Sequential()
 
-      model.add(Conv2D(64, kernel_size=4, input_shape=image_shape, padding="same"))
-      model.add(LeakyReLU(alpha=0.2))
+    model.add(Conv2D(64, kernel_size=4, input_shape=image_shape, padding="same"))
+    model.add(LeakyReLU(alpha=0.2))
 
-      model.add(Dropout(0.25))
-      model.add(Conv2D(128, kernel_size=4, strides=2, padding="same"))
-      model.add(BatchNormalization(momentum=0.8))
-      model.add(LeakyReLU(alpha=0.2))
+    model.add(Dropout(0.25))
+    model.add(Conv2D(64, kernel_size=4, strides=1, padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
 
-      model.add(Conv2D(128, kernel_size=4, strides=2, padding="same"))
-      model.add(BatchNormalization(momentum=0.8))
-      model.add(LeakyReLU(alpha=0.2))
+    model.add(Conv2D(128, kernel_size=4, strides=2, padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
 
-      model.add(Conv2D(128, kernel_size=4, strides=2, padding="same"))
-      model.add(BatchNormalization(momentum=0.8))
-      model.add(LeakyReLU(alpha=0.2))
+    model.add(Conv2D(256, kernel_size=4, strides=2, padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
 
-      model.add(Conv2D(256, kernel_size=4, strides=2, padding="same"))
-      model.add(BatchNormalization(momentum=0.8))
-      model.add(LeakyReLU(alpha=0.2))
+    model.add(Dropout(0.25))
+    model.add(Conv2D(512, kernel_size=4, strides=2, padding="same"))
+    model.add(BatchNormalization(momentum=0.8))
+    model.add(LeakyReLU(alpha=0.2))
 
-      model.add(Dropout(0.25))
-      model.add(Flatten())
-      model.add(Dense(1, activation='sigmoid'))
-      
-      return model
+    model.add(Dropout(0.25))
+    model.add(Flatten())
+    model.add(Dense(1, activation='sigmoid'))
+
+    return model
 
 def generator_loss(fake_output):
     return cross_entropy(tf.ones_like(fake_output), fake_output)

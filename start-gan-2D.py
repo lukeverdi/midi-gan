@@ -38,7 +38,7 @@ def hms_string(sec_elapsed):
     return "{}:{:>02}:{:>05.2f}".format(h, m, s)
 
 
-def build_generator(seed_size, channels):
+def build_generator(seed_size):
 
     model = Sequential()
 
